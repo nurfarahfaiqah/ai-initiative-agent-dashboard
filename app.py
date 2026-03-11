@@ -877,10 +877,9 @@ with st.sidebar:
 # -----------------------------
 # Main UI tabs
 # -----------------------------
-tab1, tab2, tab3 = st.tabs([
+tab1, tab2 = st.tabs([
     "1. Data Intake",
     "2. Insight Dashboard",
-    "3. Info",
 ])
 
 with tab1:
