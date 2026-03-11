@@ -607,41 +607,62 @@ Return strict JSON only using this exact schema:
 
 
 def normalize_executive_payload(data: Any) -> Optional[dict]:
-    # Plain object already in the right format
-    if isinstance(data, dict):
-        # Common wrapper patterns from n8n / manual responses
-        if "response" in data and isinstance(data["response"], dict):
-            return data["response"]
-        if "data" in data and isinstance(data["data"], dict):
-            return data["data"]
-        if "json" in data and isinstance(data["json"], dict):
-            return normalize_executive_payload(data["json"])
-        return data
+    """Recursively unwrap common n8n / manual-paste payload shapes until we find
+    the executive insights object.
+    """
+    expected_keys = {
+        "executive_problem_statement",
+        "key_insights",
+        "data_quality_limitations",
+        "root_cause_hypotheses",
+        "initiative_opportunities",
+        "kpi_recommendations",
+        "dashboard_story",
+    }
 
-    # n8n often returns a list of items
-    if isinstance(data, list):
-        if not data:
+    def _walk(obj: Any) -> Optional[dict]:
+        if obj is None:
             return None
 
-        # If the first item is a wrapped n8n item, unwrap it
-        first = data[0]
-        if isinstance(first, dict):
-            if "json" in first and isinstance(first["json"], dict):
-                return normalize_executive_payload(first["json"])
-            if "response" in first and isinstance(first["response"], dict):
-                return normalize_executive_payload(first["response"])
-            if "data" in first and isinstance(first["data"], dict):
-                return normalize_executive_payload(first["data"])
-            return normalize_executive_payload(first)
+        # Sometimes the pasted payload is itself a JSON string.
+        if isinstance(obj, str):
+            s = obj.strip()
+            if (s.startswith("{") and s.endswith("}")) or (s.startswith("[") and s.endswith("]")):
+                try:
+                    return _walk(json.loads(s))
+                except Exception:
+                    return None
+            return None
 
-    return None
-    first = data[0]
-    if isinstance(first, dict):
-        if "json" in first and isinstance(first["json"], dict):
-            return normalize_executive_payload(first["json"])
-        return normalize_executive_payload(first)
+        if isinstance(obj, dict):
+            # Exact target object found.
+            if expected_keys.intersection(set(obj.keys())):
+                return obj
 
-    return None
+            # Common wrapper keys from n8n / other tools.
+            for key in ["response", "data", "json", "body", "output", "result"]:
+                if key in obj:
+                    found = _walk(obj[key])
+                    if found is not None:
+                        return found
+
+            # Recursively search any nested dict/list values.
+            for value in obj.values():
+                found = _walk(value)
+                if found is not None:
+                    return found
+            return None
+
+        if isinstance(obj, list):
+            for item in obj:
+                found = _walk(item)
+                if found is not None:
+                    return found
+            return None
+
+        return None
+
+    return _walk(data)
 
 def call_n8n_webhook(webhook_url: str, payload: dict) -> Tuple[Optional[dict], str]:
     try:
