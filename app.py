@@ -816,7 +816,7 @@ def render_cross_dataset_dashboard(cleaned_datasets: Dict[str, pd.DataFrame], jo
 def render_executive_output(data: dict):
     data = normalize_executive_payload(data) or {}
     st.markdown("## Executive Insights")
-    st.info(data.get("executive_problem_statement", "No executive problem statement available."))
+    st.markdown(data.get("executive_problem_statement", "No executive problem statement available."))
 
     c1, c2 = st.columns(2)
     with c1:
