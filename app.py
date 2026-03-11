@@ -643,14 +643,21 @@ def normalize_executive_payload(data: Any) -> Optional[dict]:
 
     return None
 
-
 def call_n8n_webhook(webhook_url: str, payload: dict) -> Tuple[Optional[dict], str]:
     try:
         response = requests.post(webhook_url, json=payload, timeout=180)
         response.raise_for_status()
+
         raw_data = response.json()
         normalized = normalize_executive_payload(raw_data)
-        return normalized, json.dumps(raw_data)
+
+        debug_bundle = {
+            "raw_response": raw_data,
+            "normalized_response": normalized,
+        }
+
+        return normalized, json.dumps(debug_bundle, indent=2)
+
     except Exception as e:
         return None, f"n8n webhook error: {e}"
 
