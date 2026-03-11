@@ -15,14 +15,14 @@ from dateutil import parser
 # Page setup
 # -----------------------------
 st.set_page_config(
-    page_title="AI Initiative Discovery Agent - Dashboard",
+    page_title="InsightPilot AI",
     page_icon="📈",
     layout="wide",
 )
 
-st.title("📈 AI Initiative Discovery Agent - Dashboard")
+st.title("📈 InsightPilot AI")
 st.caption(
-    "Upload datasets → clean & normalize → analyze → call n8n backend → view interactive dashboard + executive insights"
+    "Upload datasets → clean & normalize → analyze → generate interactive dashboard insights for leadership decisions"
 )
 
 
@@ -837,9 +837,9 @@ with st.sidebar:
 # Main UI tabs
 # -----------------------------
 tab1, tab2, tab3 = st.tabs([
-    "1. Upload & Clean",
-    "2. Dashboard + Insights",
-    "3. Presenter Guide",
+    "1. Data Intake",
+    "2. Insight Dashboard",
+    "3. Info",
 ])
 
 with tab1:
@@ -975,7 +975,7 @@ with tab3:
 ### Recommended new repo
 Create a separate repo and deploy as a separate Streamlit app, for example:
 - Repo: `ai-initiative-agent-dashboard`
-- App name: `ai-initiative-agent-dashboard.streamlit.app`
+- App name: `insightpilot-ai-v1.streamlit.app`
 
 ### n8n JSON changes needed
 Your n8n response should still include:
