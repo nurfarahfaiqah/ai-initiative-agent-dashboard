@@ -15,14 +15,14 @@ from dateutil import parser
 # Page setup
 # -----------------------------
 st.set_page_config(
-    page_title="InsightPilot AI",
+    page_title="AI Initiative Discovery Agent - Dashboard",
     page_icon="📈",
     layout="wide",
 )
 
-st.title("📈 InsightPilot AI")
+st.title("📈 AI Initiative Discovery Agent - Dashboard")
 st.caption(
-    "Upload datasets → clean & normalize → analyze → generate interactive dashboard insights for leadership decisions"
+    "Upload datasets → clean & normalize → analyze → call n8n backend → view interactive dashboard + executive insights"
 )
 
 
@@ -606,12 +606,34 @@ Return strict JSON only using this exact schema:
 """.strip()
 
 
+def normalize_executive_payload(data: Any) -> Optional[dict]:
+    if isinstance(data, dict):
+        # common wrapper patterns from n8n / manual responses
+        if "response" in data and isinstance(data["response"], dict):
+            return data["response"]
+        if "data" in data and isinstance(data["data"], dict):
+            return data["data"]
+        return data
+
+    if isinstance(data, list):
+        if not data:
+            return None
+        first = data[0]
+        if isinstance(first, dict):
+            if "json" in first and isinstance(first["json"], dict):
+                return normalize_executive_payload(first["json"])
+            return normalize_executive_payload(first)
+
+    return None
+
+
 def call_n8n_webhook(webhook_url: str, payload: dict) -> Tuple[Optional[dict], str]:
     try:
         response = requests.post(webhook_url, json=payload, timeout=180)
         response.raise_for_status()
-        data = response.json()
-        return data, json.dumps(data)
+        raw_data = response.json()
+        normalized = normalize_executive_payload(raw_data)
+        return normalized, json.dumps(raw_data)
     except Exception as e:
         return None, f"n8n webhook error: {e}"
 
@@ -622,7 +644,8 @@ def safe_list(value: Any) -> list:
 
 def parse_fallback_json(raw_text: str) -> Optional[dict]:
     try:
-        return json.loads(raw_text)
+        parsed = json.loads(raw_text)
+        return normalize_executive_payload(parsed)
     except Exception:
         return None
 
@@ -774,6 +797,7 @@ def render_cross_dataset_dashboard(cleaned_datasets: Dict[str, pd.DataFrame], jo
 
 
 def render_executive_output(data: dict):
+    data = normalize_executive_payload(data) or {}
     st.markdown("## Executive Insights")
     st.info(data.get("executive_problem_statement", "No executive problem statement available."))
 
@@ -837,9 +861,9 @@ with st.sidebar:
 # Main UI tabs
 # -----------------------------
 tab1, tab2, tab3 = st.tabs([
-    "1. Data Intake",
-    "2. Insight Dashboard",
-    "3. Info",
+    "1. Upload & Clean",
+    "2. Dashboard + Insights",
+    "3. Presenter Guide",
 ])
 
 with tab1:
@@ -975,7 +999,7 @@ with tab3:
 ### Recommended new repo
 Create a separate repo and deploy as a separate Streamlit app, for example:
 - Repo: `ai-initiative-agent-dashboard`
-- App name: `insightpilot-ai-v1.streamlit.app`
+- App name: `ai-initiative-agent-dashboard.streamlit.app`
 
 ### n8n JSON changes needed
 Your n8n response should still include:
