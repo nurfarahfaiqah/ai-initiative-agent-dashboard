@@ -966,12 +966,12 @@ with tab1:
 
                     st.success("Analysis completed.")
 
-    if st.session_state.analysis_complete:
-        st.subheader("Cleaning Reports")
-        st.json(st.session_state.cleaning_reports)
+    #if st.session_state.analysis_complete:
+        #st.subheader("Cleaning Reports")
+        #st.json(st.session_state.cleaning_reports)
 
-        st.subheader("Prompt Sent to n8n")
-        st.code(st.session_state.generated_prompt, language="text")
+        #st.subheader("Prompt Sent to n8n")
+        #st.code(st.session_state.generated_prompt, language="text")
 
 with tab2:
     if not st.session_state.analysis_complete:
