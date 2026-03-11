@@ -1,0 +1,7 @@
+streamlit
+pandas
+duckdb
+openpyxl
+numpy
+python-dateutil
+requests
