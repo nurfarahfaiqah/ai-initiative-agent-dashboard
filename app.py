@@ -644,26 +644,13 @@ def normalize_executive_payload(data: Any) -> Optional[dict]:
     return None
 
 
-def call_n8n_webhook(webhook_url: str, payload: dict):
+def call_n8n_webhook(webhook_url: str, payload: dict) -> Tuple[Optional[dict], str]:
     try:
         response = requests.post(webhook_url, json=payload, timeout=180)
-        raw_text = response.text
         response.raise_for_status()
-
-        try:
-            raw_data = response.json()
-        except Exception:
-            return None, f"Non-JSON response from n8n:\n{raw_text}"
-
+        raw_data = response.json()
         normalized = normalize_executive_payload(raw_data)
-
-        debug_bundle = {
-            "status_code": response.status_code,
-            "raw_response": raw_data,
-            "normalized_response": normalized,
-        }
-        return normalized, json.dumps(debug_bundle, indent=2)
-
+        return normalized, json.dumps(raw_data)
     except Exception as e:
         return None, f"n8n webhook error: {e}"
 
@@ -825,23 +812,6 @@ def render_cross_dataset_dashboard(cleaned_datasets: Dict[str, pd.DataFrame], jo
         else:
             st.info("No likely join keys detected.")
 
-def debug_show_payload_state():
-    st.markdown("## Debug Payload Check")
-
-    st.markdown("### Raw analysis output")
-    if st.session_state.analysis_output:
-        st.code(st.session_state.analysis_output, language="json")
-    else:
-        st.info("analysis_output is empty")
-
-    st.markdown("### Raw executive_json object")
-    st.write(type(st.session_state.executive_json))
-    st.json(st.session_state.executive_json)
-
-    normalized = normalize_executive_payload(st.session_state.executive_json)
-    st.markdown("### Normalized executive_json")
-    st.write(type(normalized))
-    st.json(normalized)
 
 def render_executive_output(data: dict):
     data = normalize_executive_payload(data) or {}
@@ -1016,42 +986,25 @@ with tab2:
             render_dataset_dashboard(selected_dataset, st.session_state.cleaned_datasets[selected_dataset])
 
         if st.session_state.executive_json is not None:
-          # ---- DEBUG SECTION ----
-          st.markdown("## Debug: n8n Response")
-          
-          st.markdown("### Raw response stored from n8n")
-          st.code(st.session_state.analysis_output, language="json")
-          
-          st.markdown("### Parsed executive_json object")
-          st.write(type(st.session_state.executive_json))
-          st.json(st.session_state.executive_json)
-          
-          normalized = normalize_executive_payload(st.session_state.executive_json)
-          
-          st.markdown("### Normalized payload used by dashboard")
-          st.write(type(normalized))
-          st.json(normalized)
-          # ---- END DEBUG ----
-          render_executive_output(st.session_state.executive_json)
-          
+            render_executive_output(st.session_state.executive_json)
         else:
-          st.warning("Executive insights are not generated yet.")
-          st.markdown("**Option A: Auto mode** — enter a working n8n webhook URL in the sidebar and rerun analysis.")
-          st.markdown("**Option B: Manual mode** — paste the JSON response below.")
-          pasted_json = st.text_area(
-              "Paste JSON output here",
-              height=320,
-              placeholder="Paste the n8n or model JSON response here...",
-          )
-          if st.button("Use Pasted JSON", use_container_width=True):
-              parsed = parse_fallback_json(pasted_json)
-              if parsed is None:
-                  st.error("That is not valid JSON. Paste the exact JSON output.")
-              else:
-                  st.session_state.executive_json = parsed
-                  st.session_state.analysis_output = pasted_json
-                  st.success("Executive insights loaded successfully.")
-                  st.rerun()
+            st.warning("Executive insights are not generated yet.")
+            st.markdown("**Option A: Auto mode** — enter a working n8n webhook URL in the sidebar and rerun analysis.")
+            st.markdown("**Option B: Manual mode** — paste the JSON response below.")
+            pasted_json = st.text_area(
+                "Paste JSON output here",
+                height=320,
+                placeholder="Paste the n8n or model JSON response here...",
+            )
+            if st.button("Use Pasted JSON", use_container_width=True):
+                parsed = parse_fallback_json(pasted_json)
+                if parsed is None:
+                    st.error("That is not valid JSON. Paste the exact JSON output.")
+                else:
+                    st.session_state.executive_json = parsed
+                    st.session_state.analysis_output = pasted_json
+                    st.success("Executive insights loaded successfully.")
+                    st.rerun()
 
 with tab3:
     presenter_text = """
