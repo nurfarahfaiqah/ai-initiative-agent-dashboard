@@ -1006,7 +1006,7 @@ with tab2:
                     st.success("Executive insights loaded successfully.")
                     st.rerun()
 
-with tab3:
+#with tab3:
     presenter_text = """
 ### What changed in this dashboard version
 - Slide generation is removed from the main flow.
@@ -1051,4 +1051,4 @@ python-dateutil
 requests
 ```
 """
-    st.markdown(presenter_text)
+   # st.markdown(presenter_text)
