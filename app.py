@@ -635,7 +635,7 @@ def normalize_executive_payload(data: Any) -> Optional[dict]:
             return normalize_executive_payload(first)
 
     return None
-        first = data[0]
+    first = data[0]
         if isinstance(first, dict):
             if "json" in first and isinstance(first["json"], dict):
                 return normalize_executive_payload(first["json"])
