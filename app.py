@@ -607,17 +607,34 @@ Return strict JSON only using this exact schema:
 
 
 def normalize_executive_payload(data: Any) -> Optional[dict]:
+    # Plain object already in the right format
     if isinstance(data, dict):
-        # common wrapper patterns from n8n / manual responses
+        # Common wrapper patterns from n8n / manual responses
         if "response" in data and isinstance(data["response"], dict):
             return data["response"]
         if "data" in data and isinstance(data["data"], dict):
             return data["data"]
+        if "json" in data and isinstance(data["json"], dict):
+            return normalize_executive_payload(data["json"])
         return data
 
+    # n8n often returns a list of items
     if isinstance(data, list):
         if not data:
             return None
+
+        # If the first item is a wrapped n8n item, unwrap it
+        first = data[0]
+        if isinstance(first, dict):
+            if "json" in first and isinstance(first["json"], dict):
+                return normalize_executive_payload(first["json"])
+            if "response" in first and isinstance(first["response"], dict):
+                return normalize_executive_payload(first["response"])
+            if "data" in first and isinstance(first["data"], dict):
+                return normalize_executive_payload(first["data"])
+            return normalize_executive_payload(first)
+
+    return None
         first = data[0]
         if isinstance(first, dict):
             if "json" in first and isinstance(first["json"], dict):
